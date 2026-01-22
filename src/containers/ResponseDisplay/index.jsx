@@ -39,19 +39,74 @@ export class ResponseDisplay extends React.Component {
     );
   }
 
+  get textResponses() {
+    return this.props.response.text.map(text => parse(this.purify.sanitize(text)));
+  }
+
+  /* Extract prompts from oraMetadata */
+  get prompts() {
+    const rawPrompts = this.props.oraMetadata?.prompts || []
+    return rawPrompts.map(p => p.description || '');
+  }
+
+  /* Helper method to sanitizes and parse HTML strings */
+  sanitizeAndParse = (html = '') => parse(this.purify.sanitize(html));
+
   render() {
+    const {prompts, textResponses } = this;
+    
     return (
       <div className="response-display">
         {this.allowFileUpload && <SubmissionFiles files={this.submittedFiles} data-testid="submission-files" />}
         {this.allowFileUpload && <PreviewDisplay files={this.submittedFiles} data-testid="allow-file-upload" />}
-        {
-          /*  eslint-disable react/no-array-index-key */
-          this.textContents.map((textContent, index) => (
-            <Card key={index}>
-              <Card.Section className="response-display-text-content" data-testid="response-display-text-content">{textContent}</Card.Section>
-            </Card>
-          ))
-        }
+        
+        {/* Multi-prompt ORA rendering */}
+        {prompts.length > 0 ? (
+          prompts.map((prompt, i) => {
+            const answer = textResponses[i] || '';
+            const promptText = prompt || '<em>No prompt provided</em>';
+
+            return (
+              <Card key={i} className="my-5">
+
+                {/* Prompt header */}
+                <Card.Header title={<strong>Prompt {i + 1}</strong>}/>
+
+                {/* Prompt content */}
+                <Card.Section 
+                  className="prompt-text"> {this.sanitizeAndParse(promptText)} 
+                </Card.Section>
+
+                {/* Learner response header */}
+                <Card className="mt-3" style={{ backgroundColor: '#f8f9fa' }}>
+                  <Card.Header title={ <strong style={{ fontSize: '1.1rem', color: '#343a40' }}> Learner Response </strong>}/>
+
+                  {/* Learner response content */}
+                  <Card.Section className="response-display-text-content">
+                    {answer ? (
+                      answer
+                    ) : (
+                      <em className="text-muted"> No response submitted for this prompt.</em>
+                    )}
+                  </Card.Section>
+                </Card>
+              </Card>
+            );
+          })
+        ) : (
+        /* Fallback for single or no prompt scenarios */
+          textResponses.length > 0 ? (
+            textResponses.map((text, index) => (
+              <Card key={index} className="my-3" style={{ padding: '1rem' }}>
+                <Card.Section>
+                  {text || <em className="text-muted">No response submitted</em>}
+                </Card.Section>
+              </Card>
+            ))
+          ) : (
+            <em className="text-muted">No prompts or responses available.</em>
+          )
+        )}
       </div>
     );
   }
@@ -62,6 +117,7 @@ ResponseDisplay.defaultProps = {
     text: [],
     files: [],
   },
+  oraMetadata: {prompts: [] },
   fileUploadResponseConfig: fileUploadResponseOptions.none,
 };
 ResponseDisplay.propTypes = {
@@ -73,15 +129,27 @@ ResponseDisplay.propTypes = {
       }),
     ).isRequired,
   }),
+  oraMetadata: PropTypes.shape({
+    prompts: PropTypes.arrayOf(
+      PropTypes.shape({
+        description: PropTypes.string,
+      }),
+    ),
+  }),
   fileUploadResponseConfig: PropTypes.oneOf(
     Object.values(fileUploadResponseOptions),
   ),
 };
 
-export const mapStateToProps = (state) => ({
-  response: selectors.grading.selected.response(state),
-  fileUploadResponseConfig: selectors.app.ora.fileUploadResponseConfig(state),
-});
+export const mapStateToProps = (state) => {
+  const oraMetadata = selectors.app.oraMetadata(state);
+  console.log('ORA METADATA:', selectors.app.oraMetadata(state));
+  return {
+    response: selectors.grading.selected.response(state),
+    oraMetadata,
+    fileUploadResponseConfig: selectors.app.ora.fileUploadResponseConfig(state),
+  };
+};
 
 export const mapDispatchToProps = {};
 
