@@ -25,6 +25,7 @@ export class ResponseDisplay extends React.Component {
     this.purify = createDOMPurify(window);
   }
 
+  // eslint-disable-next-line react/no-unused-class-component-methods
   get textContents() {
     return this.props.response.text.map(text => parse(this.purify.sanitize(text)));
   }
@@ -45,7 +46,7 @@ export class ResponseDisplay extends React.Component {
 
   /* Extract prompts from oraMetadata */
   get prompts() {
-    const rawPrompts = this.props.oraMetadata?.prompts || []
+    const rawPrompts = this.props.oraMetadata?.prompts || [];
     return rawPrompts.map(p => p.description || '');
   }
 
@@ -53,55 +54,61 @@ export class ResponseDisplay extends React.Component {
   sanitizeAndParse = (html = '') => parse(this.purify.sanitize(html));
 
   render() {
-    const {prompts, textResponses } = this;
-    
+    const { prompts, textResponses } = this;
+
     return (
       <div className="response-display">
         {this.allowFileUpload && <SubmissionFiles files={this.submittedFiles} data-testid="submission-files" />}
         {this.allowFileUpload && <PreviewDisplay files={this.submittedFiles} data-testid="allow-file-upload" />}
-        
+
         {/* Multi-prompt ORA rendering */}
+        {/* eslint-disable-next-line no-nested-ternary */}
         {prompts.length > 0 ? (
           prompts.map((prompt, i) => {
             const answer = textResponses[i] || '';
             const promptText = prompt || '<em>No prompt provided</em>';
 
             return (
-              <Card key={i} className="my-5">
+              <>
+                {/* eslint-disable-next-line react/no-array-index-key */}
+                <Card key={i} className="my-5">
 
-                {/* Prompt header */}
-                <Card.Header title={<strong>Prompt {i + 1}</strong>}/>
+                  {/* Prompt header */}
+                  <Card.Header title={<strong>Prompt {i + 1}</strong>} />
 
-                {/* Prompt content */}
-                <Card.Section 
-                  className="prompt-text"> {this.sanitizeAndParse(promptText)} 
-                </Card.Section>
-
-                {/* Learner response header */}
-                <Card className="mt-3" style={{ backgroundColor: '#f8f9fa' }}>
-                  <Card.Header title={ <strong style={{ fontSize: '1.1rem', color: '#343a40' }}> Learner Response </strong>}/>
-
-                  {/* Learner response content */}
-                  <Card.Section className="response-display-text-content">
-                    {answer ? (
-                      answer
-                    ) : (
-                      <em className="text-muted"> No response submitted for this prompt.</em>
-                    )}
+                  {/* Prompt content */}
+                  <Card.Section
+                    className="prompt-text"
+                  > {this.sanitizeAndParse(promptText)}
                   </Card.Section>
+
+                  {/* Learner response header */}
+                  <Card className="mt-3" style={{ backgroundColor: '#f8f9fa' }}>
+                    <Card.Header title={<strong style={{ fontSize: '1.1rem', color: '#343a40' }}> Learner Response </strong>} />
+
+                    {/* Learner response content */}
+                    <Card.Section className="response-display-text-content">
+                      {answer || (
+                        <em className="text-muted"> No response submitted for this prompt.</em>
+                      )}
+                    </Card.Section>
+                  </Card>
                 </Card>
-              </Card>
+              </>
             );
           })
         ) : (
         /* Fallback for single or no prompt scenarios */
           textResponses.length > 0 ? (
             textResponses.map((text, index) => (
-              <Card key={index} className="my-3" style={{ padding: '1rem' }}>
-                <Card.Section>
-                  {text || <em className="text-muted">No response submitted</em>}
-                </Card.Section>
-              </Card>
+              <>
+                {/* eslint-disable-next-line react/no-array-index-key */}
+                <Card key={index} className="my-3" style={{ padding: '1rem' }}>
+                  <Card.Section>
+                    {text || <em className="text-muted">No response submitted</em>}
+                  </Card.Section>
+                </Card>
+              </>
             ))
           ) : (
             <em className="text-muted">No prompts or responses available.</em>
@@ -117,7 +124,7 @@ ResponseDisplay.defaultProps = {
     text: [],
     files: [],
   },
-  oraMetadata: {prompts: [] },
+  oraMetadata: { prompts: [] },
   fileUploadResponseConfig: fileUploadResponseOptions.none,
 };
 ResponseDisplay.propTypes = {
@@ -143,6 +150,7 @@ ResponseDisplay.propTypes = {
 
 export const mapStateToProps = (state) => {
   const oraMetadata = selectors.app.oraMetadata(state);
+  // eslint-disable-next-line no-console
   console.log('ORA METADATA:', selectors.app.oraMetadata(state));
   return {
     response: selectors.grading.selected.response(state),
